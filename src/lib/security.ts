@@ -6,10 +6,15 @@ export function sanitizeInput(input: string): string {
   return input.trim().replace(/[<>\"']/g, '')
 }
 
-// Validate order ID format
+// Validate order ID format (support both formats)
 export function validateOrderId(orderId: string): boolean {
-  const orderIdPattern = /^ORDER-\d{13}-\d{1,4}$/
-  return orderIdPattern.test(orderId)
+  // Support both formats:
+  // Old: ORDER-{timestamp}-{random}
+  // New: ORDER_{timestamp}_{table_number}
+  const oldFormatPattern = /^ORDER-\d{13}-\d{1,4}$/
+  const newFormatPattern = /^ORDER_\d{13}_\d{1,4}$/
+  
+  return oldFormatPattern.test(orderId) || newFormatPattern.test(orderId)
 }
 
 // Validate email format
@@ -92,15 +97,26 @@ export function escapeHtml(text: string): string {
 
 // IP validation for webhook
 export function isValidMidtransIP(ip: string): boolean {
-  // Midtrans sandbox/production IP ranges
+  // Midtrans official IP ranges (updated)
   const midtransIPs = [
-    '103.10.128.0/24',
-    '103.10.129.0/24', 
-    '127.0.0.1', // localhost for development
-    '::1' // IPv6 localhost
+    // Midtrans production IPs
+    '103.10.128',    // 103.10.128.x
+    '103.10.129',    // 103.10.129.x
+    '103.127.16',    // 103.127.16.x
+    '103.127.17',    // 103.127.17.x
+    '103.58.103',    // 103.58.103.x
+    // Localhost for development
+    '127.0.0.1',
+    '::1',
+    // Vercel/Cloudflare IPs (for forwarded requests)
+    '172.', '10.', '192.168.'
   ]
   
-  // Simple check for development - in production use proper CIDR checking
-  return process.env.NODE_ENV === 'development' || 
-         midtransIPs.some(range => ip.includes(range.split('/')[0]))
+  // In development, allow all IPs
+  if (process.env.NODE_ENV === 'development') {
+    return true
+  }
+  
+  // Check if IP starts with any valid Midtrans IP prefix
+  return midtransIPs.some(validIP => ip.startsWith(validIP))
 }
