@@ -1,6 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ======================================
+# DEPENDENCIES
+# ======================================
 /node_modules
 /.pnp
 .pnp.*
@@ -9,33 +11,157 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# testing
-/coverage
-
-# next.js
+# ======================================
+# NEXT.JS BUILD OUTPUT
+# ======================================
 /.next/
 /out/
+.next/
+next-env.d.ts
 
-# production
+# ======================================
+# PRODUCTION BUILD
+# ======================================
 /build
+/dist
+*.tsbuildinfo
 
-# misc
-.DS_Store
-*.pem
+# ======================================
+# ENVIRONMENT VARIABLES
+# ======================================
+# ⚠️ CRITICAL: Never commit actual environment files
+.env
+.env*.local
+.env.development
+.env.production
+.env.test
 
-# debug
+# Only commit example files
+!.env.example
+!.env.local.example
+
+# ======================================
+# DEPLOYMENT
+# ======================================
+.vercel
+.netlify
+
+# ======================================
+# TESTING & COVERAGE
+# ======================================
+/coverage
+*.lcov
+.nyc_output
+jest-coverage/
+
+# ======================================
+# LOGS & DEBUG
+# ======================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+logs/
+*.log
 
-# env files (can opt-in for committing if needed)
-.env*
+# ======================================
+# IDE & EDITOR
+# ======================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# vercel
-.vercel
+# VS Code settings (optional - you might want to keep some)
+# .vscode/settings.json
+# .vscode/launch.json
+# .vscode/extensions.json
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# ======================================
+# OS FILES
+# ======================================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ======================================
+# DATABASE & CACHE
+# ======================================
+*.sqlite
+*.sqlite3
+*.db
+.cache/
+
+# ======================================
+# TEMPORARY FILES
+# ======================================
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ======================================
+# SECURITY & CERTIFICATES
+# ======================================
+*.pem
+*.key
+*.cert
+*.crt
+
+# ======================================
+# SUPABASE SPECIFIC
+# ======================================
+# Keep supabase config but ignore local data
+supabase/.temp/
+supabase/logs/
+supabase/.branches/
+supabase/.git/
+
+# ======================================
+# MIDTRANS & PAYMENT
+# ======================================
+# Never commit payment credentials
+midtrans-*.json
+payment-config.json
+
+# ======================================
+# MISC
+# ======================================
+.eslintcache
+.sass-cache/
+*.css.map
+.npm/
+.node_repl_history
+.nyc_output/
+
+# ======================================
+# DEVELOPMENT & TESTING FILES
+# ======================================
+# PowerShell scripts
+*.ps1
+
+# SQL scripts (keep schema, ignore temp/test)
+*-test.sql
+*-debug.sql
+fix-*.sql
+
+# Test files
+test-*.html
+test-*.js
+test-*.ts
+debug-*.js
+debug-*.ts
+
+# Development docs (optional - remove if you want to commit)
+*_COMPLETE.md
+*_SUMMARY.md
+DATABASE.md
+DEPLOYMENT.md

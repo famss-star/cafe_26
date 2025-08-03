@@ -6,22 +6,49 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate:data": "tsx src/scripts/migrate-dummy-data.ts",
+    "test:connection": "node -e \"console.log('Testing Supabase connection...'); require('./src/scripts/migrate-dummy-data.ts').testConnection()\""
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.1",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.53.0",
+    "@tanstack/react-query": "^5.84.1",
+    "@tanstack/react-query-devtools": "^5.84.1",
+    "@types/qrcode": "^1.5.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "express-rate-limit": "^8.0.1",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
+    "lucide-react": "^0.536.0",
+    "midtrans-client": "^1.4.3",
+    "next": "15.4.5",
+    "qrcode": "^1.5.4",
+    "qrcode.react": "^4.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.4.5"
+    "react-hook-form": "^7.62.0",
+    "react-hot-toast": "^2.5.2",
+    "react-qr-code": "^2.0.18",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.0.14",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "dotenv": "^17.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "tsx": "^4.20.3",
+    "typescript": "^5"
   }
 }

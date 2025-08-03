@@ -1,0 +1,307 @@
+'use client'
+
+/* eslint-disable react-hooks/exhaustive-deps */
+
+import { useState, useEffect, useCallback } from 'react'
+import { ArrowLeft, Heart, ShoppingCart, Star } from 'lucide-react'
+import Link from 'next/link'
+import { useAuth } from '@/hooks/useAuth'
+import { useCart } from '@/store/cart'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingPage } from '@/components/ui/loading'
+import { ErrorDisplay } from '@/components/ui/error'
+import { supabase } from '@/lib/supabase-client'
+import { Product } from '@/types'
+import toast from 'react-hot-toast'
+
+interface FavoriteProduct extends Product {
+  favorited_at: string
+}
+
+export default function CustomerFavorites() {
+  const { user, loading, isAuthenticated } = useAuth()
+  const { addItem } = useCart()
+  const [favorites, setFavorites] = useState<FavoriteProduct[]>([])
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      window.location.href = '/auth/login?redirectTo=/dashboard/customer/favorites'
+    }
+  }, [loading, isAuthenticated])
+  }, [loading, isAuthenticated])
+
+  useEffect(() => {
+    if (user) {
+      fetchFavorites()
+    }
+  }, [user])
+
+  const fetchFavorites = async () => {
+    if (!user) return
+    
+    setFavoritesLoading(true)
+    setError(null)
+
+    try {
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select(`
+          created_at,
+          products (
+            id,
+            name,
+            description,
+            price,
+            category,
+            image_url,
+            is_available,
+            customization_options,
+            created_at,
+            updated_at
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        throw error
+      }
+
+      const formattedFavorites = data?.map(item => {
+        if (item.products) {
+          return {
+            ...(item.products as unknown as Product),
+            favorited_at: item.created_at
+          } as FavoriteProduct
+        }
+        return null
+      }).filter((item): item is FavoriteProduct => item !== null) || []
+
+      setFavorites(formattedFavorites)
+    } catch (err) {
+      console.error('Error fetching favorites:', err)
+      setError('Gagal memuat menu favorit')
+    } finally {
+      setFavoritesLoading(false)
+    }
+  }, [user])
+
+  const removeFavorite = async (productId: string) => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+
+      if (error) {
+        throw error
+      }
+
+      setFavorites(prev => prev.filter(item => item.id !== productId))
+      toast.success('Dihapus dari favorit')
+    } catch (err) {
+      console.error('Error removing favorite:', err)
+      toast.error('Gagal menghapus dari favorit')
+    }
+  }
+
+  const handleAddToCart = (product: Product) => {
+    addItem({
+      id: `${product.id}-${Date.now()}`,
+      product_id: product.id,
+      product,
+      quantity: 1,
+      customization: {},
+      price: product.price
+    })
+    toast.success(`${product.name} ditambahkan ke keranjang`)
+  }
+
+  if (loading) {
+    return <LoadingPage message="Memuat menu favorit..." />
+  }
+
+  if (!isAuthenticated || !user) {
+    return <ErrorDisplay title="Akses Ditolak" message="Silakan login terlebih dahulu" />
+  }
+
+  if (favoritesLoading) {
+    return <LoadingPage message="Memuat favorit..." />
+  }
+
+  if (error) {
+    return (
+      <ErrorDisplay
+        title="Gagal Memuat Favorit"
+        message={error}
+        action={
+          <Button onClick={fetchFavorites}>
+            Coba Lagi
+          </Button>
+        }
+      />
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="mr-4"
+            >
+              <Link href="/dashboard/customer">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Kembali
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Menu Favorit</h1>
+              <p className="text-sm text-gray-600">
+                {favorites.length} item favorit
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {favorites.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Belum Ada Favorit
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Tambahkan menu favorit Anda untuk akses yang lebih mudah
+              </p>
+              <Button asChild>
+                <Link href="/menu">
+                  Jelajahi Menu
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {favorites.map((product) => (
+              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="aspect-video bg-gray-200 relative">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-gray-400">No Image</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => removeFavorite(product.id)}
+                    className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
+                  >
+                    <Heart className="h-4 w-4 text-red-500 fill-current" />
+                  </button>
+                  {!product.is_available && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <span className="text-white font-medium">Tidak Tersedia</span>
+                    </div>
+                  )}
+                </div>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg line-clamp-1">{product.name}</CardTitle>
+                      <CardDescription className="line-clamp-2 mt-1">
+                        {product.description}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-lg font-bold text-amber-600">
+                      Rp {product.price.toLocaleString('id-ID')}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
+                      Favorit
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-gray-500">
+                      Ditambahkan {new Date(product.favorited_at).toLocaleDateString('id-ID')}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddToCart(product)}
+                      disabled={!product.is_available}
+                      className="ml-2"
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-1" />
+                      Tambah
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Quick Access to Menu */}
+        {favorites.length > 0 && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Jelajahi Menu Lainnya</CardTitle>
+              <CardDescription>
+                Temukan menu baru dan tambahkan ke favorit
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button asChild variant="outline" className="h-auto p-4 flex-col">
+                  <Link href="/menu?category=coffee">
+                    <div className="text-2xl mb-2">☕</div>
+                    <span>Kopi</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-auto p-4 flex-col">
+                  <Link href="/menu?category=tea">
+                    <div className="text-2xl mb-2">🍵</div>
+                    <span>Teh</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-auto p-4 flex-col">
+                  <Link href="/menu?category=food">
+                    <div className="text-2xl mb-2">🍛</div>
+                    <span>Makanan</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-auto p-4 flex-col">
+                  <Link href="/menu?category=snacks">
+                    <div className="text-2xl mb-2">🍰</div>
+                    <span>Camilan</span>
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  )
+}
